@@ -1,9 +1,21 @@
+/* Cria√ß√£o de colunas dentro da tabela */
+ALTER TABLE service_order
+ADD datetime_approved_cancelled NVARCHAR(50) NULL;
+
+ALTER TABLE service_order
+ADD datetime_first_budget_approved NVARCHAR(50) NULL;
+
+/* Procurando os t√≠tulos que possuam a s√≠laba can*/
+SELECT title
+FROM log_event
+WHERE title LIKE 'can%';
+
 /* Queries */
 UPDATE service_order
 SET datetime_execution_budget_approved = (
 	SELECT MAX(created_at)
 	FROM log_event
-	WHERE title IN ('OrÁamento aprovado', 'OrÁamento aprovado pelo pagador')
+	WHERE title IN ('Or√ßamento aprovado', 'Or√ßamento aprovado pelo pagador')
 	AND service_order.id = log_event.service_order_id
 )
 WHERE datetime_execution_budget_approved IS NULL;
@@ -12,7 +24,7 @@ UPDATE service_order
 SET datetime_approved_cancelled = (
 	SELECT TOP 1 created_at
 	FROM log_event
-	WHERE title IN ('AprovaÁ„o cancelada', 'AprovaÁ„o da finalizaÁ„o cancelada')
+	WHERE title IN ('Aprova√ß√£o cancelada', 'Aprova√ß√£o da finaliza√ß√£o cancelada')
 	AND service_order.id = log_event.service_order_id
 	ORDER BY created_at DESC 
 ),
@@ -20,7 +32,7 @@ datetime_execution_budget_approved = NULL
 WHERE EXISTS (
 	SELECT * 
 	FROM log_event
-	WHERE title IN ('AprovaÁ„o cancelada', 'AprovaÁ„o da finalizaÁ„o cancelada')
+	WHERE title IN ('Aprova√ß√£o cancelada', 'Aprova√ß√£o da finaliza√ß√£o cancelada')
 	AND service_order.id = log_event.service_order_id
 );
 
@@ -28,18 +40,19 @@ UPDATE service_order
 SET datetime_first_budget_approved = (
 	SELECT MIN(created_at)
 	FROM log_event
-	WHERE title IN ('OrÁamento aprovado', 'OrÁamento aprovado pelo pagador')
+	WHERE title IN ('Or√ßamento aprovado', 'Or√ßamento aprovado pelo pagador')
 	AND service_order.id = log_event.service_order_id
 )
 WHERE datetime_first_budget_approved IS NULL; 
 
-/* Contabilizando os orÁamentos aprovados e cancelados (agrupados por mÍs) em 2022*/
-/* Quantidade de orÁamentos aprovados */
+/* Contabilizando os or√ßamentos aprovados e cancelados (agrupados por m√™s) em 2022*/
+/* Quantidade de or√ßamentos aprovados */
 SELECT COUNT(DISTINCT datetime_execution_budget_approved) qtd_mes FROM service_order 
 WHERE datetime_execution_budget_approved BETWEEN '20220101' AND '20221231' AND datetime_execution_budget_approved IS NOT NULL
 GROUP BY MONTH(datetime_execution_budget_approved), YEAR(datetime_execution_budget_approved)
 ORDER BY MONTH(datetime_execution_budget_approved);
-/* Quantidade de orÁamentos cancelados */
+
+/* Quantidade de or√ßamentos cancelados */
 SELECT COUNT(DISTINCT datetime_approved_cancelled) qtd_mes FROM service_order 
 WHERE datetime_approved_cancelled BETWEEN '20220101' AND '20221231'
 GROUP BY MONTH(datetime_approved_cancelled), YEAR(datetime_approved_cancelled)
